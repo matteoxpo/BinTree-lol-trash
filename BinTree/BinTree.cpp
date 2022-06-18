@@ -1,88 +1,83 @@
 ﻿#include <iostream>
+#include <conio.h>
+#include <stdlib.h>
+#include <string.h>
 using namespace std;
 
 struct Tree {
 	int data;
 	Tree* left;
 	Tree* right;
-	Tree(int val = 0){
-		data = val;
-		left = nullptr;
-		right = nullptr;
-	}
 };
 
-Tree* push(int val, Tree* root) {
-	if (nullptr == root)
-	{
-		root = new Tree(val);
-		return root;
+
+void newTreeEl(int val, Tree** t) {
+	if (nullptr == *t) {
+		*t = (Tree*)calloc(1,sizeof(Tree));
+		(*t)->data = val;
+		(*t)->left = nullptr;
+		(*t)->right = nullptr;
 	}
-	Tree* temp = root;
-	while (true) {
-		if (val < temp->data)
-			if (temp->left != nullptr) {
-				temp = temp->left;
-				continue;
-			}
-			else {
-				Tree* lchild = new Tree(val);
-				temp->left = lchild;
-				break;
-			}
-		if (val > temp->data)
-			if (temp->right != nullptr) {
-				temp = temp->right;
-				continue;
-			}
-			else {
-				Tree* rchild = new Tree(val);
-				temp->right = rchild;
-				break;
-			}
+	else {
+		if (val == (*t)->data) {
+			printf("\nЭлемент %d уже есть в дереве!\n", val);
+			return;
+		}
+		if (val > (*t)->data)
+			newTreeEl(val, &(*t)->right);
+		else
+			newTreeEl(val, &(*t)->left);
 	}
-	return root;
 }
 
-Tree* enterTree() {
-	Tree* root = nullptr;
-	int count = 0;
-	printf("\nВведите количесвто элементов дерева: ");
-	scanf_s("%d", &count);
-
-
-	int input = 0;
-	printf("\nВведите значение корня дерева: ");
-	scanf_s("%d", &input);
-	root = push(input, root);
-	getchar();
-	for (int i = 1; i < count; i++) {
-		printf("\nВведите значение листка дерева: ");
-		scanf_s("%d", &input);
-		root = push(input, root);
+void destroy(Tree* t) {
+	if (nullptr != t){
+		destroy(t->left);
+		destroy(t->right);
+		free(t);
 	}
-	return root;
 }
 
-void Print(Tree* root, int l) {
-	if (root == nullptr) return;
-	Print(root->right, l + 3);
-	for (int i = 0; i < l; i++) { printf(" "); }
-	printf("%d\n", root->data);
-	Print(root->left, l + 3);
+int countNodes(Tree* t) {
+	if (nullptr == t) return 0;
+	return countNodes(t->left) + countNodes(t->right) + 1;
 }
+
+
+void Print(Tree* t, int space = 0) {
+	if (t == nullptr) return;
+
+	Print(t->right, space + 3);
+	for (int i = 0; i < space; i++) { printf(" "); }
+	printf("%d\n", t->data);
+	Print(t->left, space + 3);
+}
+
 
 void Menu()
 {
-	int i;
-	int inpt;
-	const char* ss[] = { " 0 - Создание бинарного дерева", " 1 - Добавление элемента в дерево",\
-	" 2 - Рекурсивный вывод элементов дерева", " 3 - Удаление текущего дерева"," 4 - Выход"};
-	int k = sizeof(ss) / sizeof(ss[0]);
-
+	printf("\nБинарное дерево - динамическая структура данных, где есть корневой элемент и листья.");
+	int k = 0;
+	int i = 0;
+	int inpt = 0;
+	char s[10] = { " " };
+	char* str;
 	Tree* root = nullptr;
-	int checkInpt = -1;
-	int num = 0;
+	int val = 0;
+
+	printf("\nПроцесс создания дерева...\n");
+	printf("\nВведите элементы, ввод 2 enter подряд означает окончание ввода: \n");
+	while (1) {
+		str = gets_s(s);
+		if ('\0' == s[0]) break;
+		newTreeEl(atoi(str), &root);
+	}
+	
+	printf("\nДерево создано.");
+	const char* ss[] = { " 0 - Пересоздание бинарного дерева", " 1 - Добавление элемента в дерево",\
+	" 2 - Рекурсивный вывод элементов дерева", " 3 - Удаление текущего дерева",\
+	" 4 - Вывод количества элементов в дереве", " 5 - Выход"};
+	k = sizeof(ss) / sizeof(ss[0]);
 
 	while (1)
 	{
@@ -93,19 +88,24 @@ void Menu()
 		scanf_s("%d", &inpt);
 		switch (inpt)
 		{
-		case 0: 
+		case 0:
 			printf("При создании дерева прошлое удаляется");
-			free(root);
+			destroy(root);
 			root = nullptr;
-			root = enterTree();            
+			printf("\nВведите элементы, ввод 2 enter подряд означает окончание ввода: \n");
+			getchar();
+			while (1) {
+				str = gets_s(s);
+				if ('\0' == s[0]) break;
+				newTreeEl(atoi(str), &root);
+			}
 			break;
 		case 1:
-			if (nullptr == root)
-				printf("При добавлении элемента в пустое дерево создается дерево размера 1");
+			if (nullptr == root)	printf("При добавлении элемента в пустое дерево создается дерево размера 1\n");
 			
 			printf("Число: "); 
-			scanf_s("%d", &num); 
-			root = push(num, root);      
+			scanf_s("%d", &val); 
+			newTreeEl(val, &root);
 			break;
 		case 2: 
 			if (nullptr == root) {
@@ -118,8 +118,12 @@ void Menu()
 			free(root);
 			root = nullptr;
 			break;
-		case 4: 
+		case 4:
+			printf("Количество элементов в дереве: %d", countNodes(root));
+			break;
+		case 5: 
 			printf("Спасибо за использование! До свидания!");
+			destroy(root);
 			return;
 		default: printf("Неизвестная команда!");
 		}
